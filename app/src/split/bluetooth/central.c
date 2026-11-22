@@ -882,6 +882,14 @@ static void split_central_device_found(const bt_addr_le_t *addr, int8_t rssi, ui
     }
 }
 
+/* AJ fork: retry a scan start that failed. Upstream set is_scanning before
+ * bt_le_scan_start() and never cleared it on failure, so one failed start
+ * (e.g. -EALREADY while zmk-ble-mouse-host's own scan holds the scanner, or
+ * a busy controller while it is initiating a mouse reconnect) left a dropped
+ * half unreconnected until reboot. */
+static void scan_retry_cb(struct k_work *work) { start_scanning(); }
+static K_WORK_DELAYABLE_DEFINE(scan_retry_work, scan_retry_cb);
+
 static int start_scanning(void) {
     if (!is_enabled) {
         LOG_DBG("Not scanning, we're disabled");
@@ -911,7 +919,9 @@ static int start_scanning(void) {
     is_scanning = true;
     int err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, split_central_device_found);
     if (err < 0) {
-        LOG_ERR("Scanning failed to start (err %d)", err);
+        LOG_ERR("Scanning failed to start (err %d), retrying in 1 s", err);
+        is_scanning = false;
+        k_work_reschedule(&scan_retry_work, K_SECONDS(1));
         return err;
     }
 
