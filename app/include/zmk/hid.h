@@ -41,7 +41,9 @@
 #error "Unknown keyboard report usages configuration"
 #endif
 
-#define ZMK_HID_MOUSE_NUM_BUTTONS 0x05
+// 8 buttons (fork): fills the button byte, so no padding. Lets an external
+// BLE mouse's buttons 6-8 reach macOS natively.
+#define ZMK_HID_MOUSE_NUM_BUTTONS 0x08
 
 // See https://www.usb.org/sites/default/files/hid1_11.pdf section 6.2.2.4 Main Items
 
@@ -198,12 +200,8 @@ static const uint8_t zmk_hid_report_desc[] = {
     HID_LOGICAL_MIN8(0x00),
     HID_LOGICAL_MAX8(0x01),
     HID_REPORT_SIZE(0x01),
-    HID_REPORT_COUNT(0x5),
+    HID_REPORT_COUNT(ZMK_HID_MOUSE_NUM_BUTTONS),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
-    // Constant padding for the last 3 bits.
-    HID_REPORT_SIZE(0x03),
-    HID_REPORT_COUNT(0x01),
-    HID_INPUT(ZMK_HID_MAIN_VAL_CONST | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
     // Some OSes ignore pointer devices without X/Y data.
     HID_USAGE_PAGE(HID_USAGE_GEN_DESKTOP),
     HID_USAGE(HID_USAGE_GD_X),
