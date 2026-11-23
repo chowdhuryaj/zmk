@@ -639,6 +639,15 @@ static enum bt_security_err auth_pairing_accept(struct bt_conn *conn,
         return BT_SECURITY_ERR_PAIR_NOT_ALLOWED;
     }
 
+    /* AJ fork: with BT_SMP_SC_PAIR_ONLY=n (for a hosted BLE mouse, central
+     * role), still refuse legacy pairing from hosts. 0x08 = the SC bit of
+     * the SMP AuthReq field (Core spec Vol 3 Part H 3.5.1). */
+    if (!IS_ENABLED(CONFIG_BT_SMP_SC_PAIR_ONLY) && info.role == BT_CONN_ROLE_PERIPHERAL &&
+        !(feat->auth_req & 0x08)) {
+        LOG_WRN("Rejecting legacy (non-SC) pairing from a host");
+        return BT_SECURITY_ERR_AUTH_REQUIREMENT;
+    }
+
     return BT_SECURITY_ERR_SUCCESS;
 };
 

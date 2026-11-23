@@ -160,7 +160,11 @@ menuconfig ZMK_BLE
     bool "BLE (HID over GATT)"
     select BT
     select BT_SMP
-    select BT_SMP_SC_PAIR_ONLY
+    # AJ fork: imply, not select, so a central that hosts a BLE mouse can set
+    # BT_SMP_SC_PAIR_ONLY=n (many mice only do legacy pairing). Host-facing
+    # (peripheral-role) pairing stays LE Secure Connections only either way:
+    # auth_pairing_accept() in ble.c refuses legacy there.
+    imply BT_SMP_SC_PAIR_ONLY
     select BT_SMP_APP_PAIRING_ACCEPT
     select BT_PERIPHERAL
     select BT_DIS
