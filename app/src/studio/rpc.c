@@ -271,6 +271,19 @@ static void refresh_selected_transport(void) {
         }
     }
 
+    /* Fork: no transport for the selected output (e.g. a dongle on USB with
+     * only the BLE transport built, USB Studio left out on purpose): listen
+     * on the first built one instead of dropping every request. */
+    if (!selected_transport) {
+        STRUCT_SECTION_FOREACH(zmk_rpc_transport, t) {
+            selected_transport = t;
+            if (selected_transport->rx_start) {
+                selected_transport->rx_start();
+            }
+            break;
+        }
+    }
+
     if (!selected_transport) {
         LOG_WRN("Failed to select a transport!");
     }
